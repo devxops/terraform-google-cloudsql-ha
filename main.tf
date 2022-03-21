@@ -5,10 +5,10 @@ locals {
 # Master CloudSQL
 # https://www.terraform.io/docs/providers/google/r/sql_database_instance.html
 resource "google_sql_database_instance" "new_instance_sql_master" {
-  name             = "${local.name_prefix}-master"
-  region           = "${var.general["region"]}"
-  database_version = "${lookup(var.general, "db_version", "MYSQL_5_7")}"
-
+  name                = "${local.name_prefix}-master"
+  region              = "${var.general["region"]}"
+  database_version    = "${lookup(var.general, "db_version", "MYSQL_5_7")}"
+  deletion_protection = true
   settings {
     tier                        = "${lookup(var.master, "tier", "db-f1-micro")}"
     disk_type                   = "${lookup(var.master, "disk_type", "PD_SSD")}"
@@ -16,9 +16,16 @@ resource "google_sql_database_instance" "new_instance_sql_master" {
     disk_autoresize             = "${lookup(var.master, "disk_auto", true)}"
     activation_policy           = "${lookup(var.master, "activation_policy", "ALWAYS")}"
     availability_type           = "ZONAL"
-    replication_type            = "${lookup(var.master, "replication_type", "SYNCHRONOUS")}"
-    authorized_gae_applications = "${var.authorized_gae_applications_master}"
     user_labels                 = "${var.labels}"
+
+    dynamic "database_flags" {
+      iterator = flag
+      for_each = var.database_flags
+      content {
+        name = flag.key
+        value = flag.value
+      }
+    }
 
     ip_configuration {
       require_ssl  = "${lookup(var.master, "require_ssl", false)}"
@@ -63,17 +70,24 @@ resource "google_sql_database_instance" "new_instance_sql_replica" {
     disk_autoresize             = "${lookup(var.replica, "disk_auto", true)}"
     activation_policy           = "${lookup(var.replica, "activation_policy", "ALWAYS")}"
     availability_type           = "ZONAL"
-    authorized_gae_applications = "${var.authorized_gae_applications_replica}"
-    crash_safe_replication      = true
+
+    dynamic "database_flags" {
+      iterator = flag
+      for_each = var.database_flags
+      content {
+        name = flag.key
+        value = flag.value
+      }
+    }
 
     location_preference {
       zone = "${var.general["region"]}-${var.replica["zone"]}"
     }
 
-    maintenance_window {
-      day          = "${lookup(var.replica, "maintenance_day", 3)}"          # Wednesday
-      hour         = "${lookup(var.replica, "maintenance_hour", 2)}"         # 2AM
-      update_track = "${lookup(var.replica, "maintenance_track", "stable")}"
-    }
+    # maintenance_window {
+    #   day          = "${lookup(var.replica, "maintenance_day", 3)}"          # Wednesday
+    #   hour         = "${lookup(var.replica, "maintenance_hour", 2)}"         # 2AM
+    #   update_track = "${lookup(var.replica, "maintenance_track", "stable")}"
+    # }
   }
 }

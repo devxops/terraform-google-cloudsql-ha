@@ -12,7 +12,7 @@
 # backup_enabled (default: true)
 # backup_time (default: 02:30)
 variable "general" {
-  type        = "map"
+  type        = map(string)
   description = "General configuration"
 }
 
@@ -28,7 +28,7 @@ variable "general" {
 # maintenance_hour (default: 2)
 # maintenance_track (default: stable)
 variable "master" {
-  type        = "map"
+  type        = map(string)
   description = "Master configuration"
 }
 
@@ -43,28 +43,21 @@ variable "master" {
 # maintenance_hour (default: 2)
 # maintenance_track (default: stable)
 variable "replica" {
-  type        = "map"
+  type        = map(string)
   description = "Replica configuration"
 }
 
 variable "labels" {
-  type        = "map"
+  type        = map(string)
   default     = {}
   description = "Global labels"
 }
 
 ##########################
-###    AUTORIZATIONS   ###
+###       COMMON       ###
 ##########################
-
-variable "authorized_gae_applications_master" {
-  type        = "list"
-  default     = []
-  description = "A list of Google App Engine (GAE) project names that are allowed to access this master instance"
-}
-
-variable "authorized_gae_applications_replica" {
-  type        = "list"
-  default     = []
-  description = "A list of Google App Engine (GAE) project names that are allowed to access this replica instance"
+variable "database_flags" {
+  description = "List of Cloud SQL flags that are applied to the database server. See [more details](https://cloud.google.com/sql/docs/mysql/flags)"
+  type = map(string)
+  default = {}
 }
